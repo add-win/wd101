@@ -4,21 +4,50 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("user-form").addEventListener("submit", saveUserForm);
 });
 
-const setMinMaxDOB = () => {
+function setMinMaxDOB() {
   const today = new Date();
   const min = new Date(today.getFullYear() - 55, today.getMonth(), today.getDate());
   const max = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
 
-  document.getElementById("dob").min = min.toISOString().split("T")[0];
-  document.getElementById("dob").max = max.toISOString().split("T")[0];
-};
+  const dobInput = document.getElementById("dob");
+  dobInput.min = min.toISOString().split("T")[0];
+  dobInput.max = max.toISOString().split("T")[0];
+}
 
-const retrieveEntries = () => {
-  const entries = localStorage.getItem("user-entries");
-  return entries ? JSON.parse(entries) : [];
-};
+function retrieveEntries() {
+  return JSON.parse(localStorage.getItem("user-entries") || "[]");
+}
 
-const saveUserForm = (event) => {
+function displayEntries() {
+  const entries = retrieveEntries();
+  const table = `
+    <table class="w-full border border-gray-300 text-sm text-left">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="border px-4 py-2">Name</th>
+          <th class="border px-4 py-2">Email</th>
+          <th class="border px-4 py-2">Password</th>
+          <th class="border px-4 py-2">Dob</th>
+          <th class="border px-4 py-2">Accepted terms?</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${entries.map(entry => `
+          <tr>
+            <td class="border px-4 py-2">${entry.name}</td>
+            <td class="border px-4 py-2">${entry.email}</td>
+            <td class="border px-4 py-2">${entry.password}</td>
+            <td class="border px-4 py-2">${entry.dob}</td>
+            <td class="border px-4 py-2">${entry.acceptedTermsAndconditions ? "Yes" : "No"}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  document.getElementById("user-entries").innerHTML = table;
+}
+
+function saveUserForm(event) {
   event.preventDefault();
 
   const name = document.getElementById("name").value.trim();
@@ -27,7 +56,7 @@ const saveUserForm = (event) => {
   const dob = document.getElementById("dob").value;
   const acceptedTermsAndconditions = document.getElementById("acceptTerms").checked;
 
-  // AGE VALIDATION
+  // Age check
   const birthDate = new Date(dob);
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
@@ -35,14 +64,8 @@ const saveUserForm = (event) => {
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-
   if (age < 18 || age > 55) {
     alert("Age must be between 18 and 55.");
-    return;
-  }
-
-  if (!email.match(/^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$/)) {
-    alert("Invalid email format.");
     return;
   }
 
@@ -53,39 +76,4 @@ const saveUserForm = (event) => {
 
   displayEntries();
   document.getElementById("user-form").reset();
-};
-
-const displayEntries = () => {
-  const entries = retrieveEntries();
-  if (entries.length === 0) {
-    document.getElementById("user-entries").innerHTML = `<p class="text-center text-gray-600">No entries yet.</p>`;
-    return;
-  }
-
-  const table = `
-    <table class="min-w-full border border-gray-300 text-sm text-left text-gray-700">
-      <thead class="bg-indigo-100 text-indigo-800">
-        <tr>
-          <th class="px-4 py-2">Name</th>
-          <th class="px-4 py-2">Email</th>
-          <th class="px-4 py-2">Password</th>
-          <th class="px-4 py-2">DOB</th>
-          <th class="px-4 py-2">Accepted Terms?</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${entries.map(entry => `
-          <tr class="border-t">
-            <td class="px-4 py-2">${entry.name}</td>
-            <td class="px-4 py-2">${entry.email}</td>
-            <td class="px-4 py-2">${entry.password}</td>
-            <td class="px-4 py-2">${entry.dob}</td>
-            <td class="px-4 py-2">${entry.acceptedTermsAndconditions ? "Yes" : "No"}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-
-  document.getElementById("user-entries").innerHTML = table;
-};
+}
